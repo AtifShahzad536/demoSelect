@@ -1,304 +1,349 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { X, ChevronDown, Globe } from 'lucide-react';
 
-/* ─── Smooth Accordion using CSS Grid rows trick ─────────────────────────
-   grid-template-rows: 0fr → 1fr  is perfectly linear and silky smooth.
-   The inner div needs overflow:hidden + min-height:0.
-──────────────────────────────────────────────────────────────────────── */
-const Accordion = ({ isOpen, children }) => (
-  <div
-    style={{
-      display: 'grid',
-      gridTemplateRows: isOpen ? '1fr' : '0fr',
-      transition: 'grid-template-rows 380ms cubic-bezier(0.4, 0, 0.2, 1)',
-    }}
-  >
-    <div style={{ overflow: 'hidden', minHeight: 0 }}>
-      {children}
-    </div>
-  </div>
-);
+/* ─────────────────────────────────────────────────────────────────────────
+   SlideAccordion
+   Uses scrollHeight (measured on the inner div) so the CSS transition always
+   goes from 0 → exact pixel value. Never eases over a large empty range.
+   Works on every mobile browser, including old Safari.
+──────────────────────────────────────────────────────────────────────────*/
+const SlideAccordion = ({ isOpen, children, style = {} }) => {
+  const outerRef = useRef(null);
+  const innerRef = useRef(null);
 
-const MobileMenu = ({ isOpen, onClose, navLinks, drawerData }) => {
-  const [expandedLink, setExpandedLink] = useState(null);
-  const [expandedCategory, setExpandedCategory] = useState(null);
-  const [mounted, setMounted] = useState(false);
-
-  /* Mount after first open so CSS transition fires properly */
   useEffect(() => {
-    if (isOpen) setMounted(true);
+    const outer = outerRef.current;
+    const inner = innerRef.current;
+    if (!outer || !inner) return;
+
+    if (isOpen) {
+      const h = inner.scrollHeight;
+      outer.style.height = h + 'px';
+    } else {
+      // Snap current live height → 0 so the transition plays even mid-animation
+      outer.style.height = outer.offsetHeight + 'px';
+      // Force reflow so the browser registers the "from" value
+      void outer.offsetHeight; // eslint-disable-line
+      outer.style.height = '0px';
+    }
   }, [isOpen]);
 
-  /* Body scroll lock */
+  return (
+    <div
+      ref={outerRef}
+      style={{
+        overflow: 'hidden',
+        height: 0,
+        transition: 'height 380ms cubic-bezier(0.4, 0, 0.2, 1)',
+        willChange: 'height',
+        ...style,
+      }}
+    >
+      <div ref={innerRef} style={{ opacity: 1 }}>
+        {children}
+      </div>
+    </div>
+  );
+};
+
+/* ─────────────────────────────────────────────────────────────────────────
+   NavItem — one top-level nav link + its category list
+──────────────────────────────────────────────────────────────────────────*/
+const NavItem = ({ link, data, isExpanded, onToggle, linkIdx, isMenuOpen }) => {
+  const cats = data?.categories || [];
+  const hasSubs = !!data;
+
+  return (
+    <li
+      style={{
+        borderBottom: '1px solid #f3f4f6',
+        opacity: isMenuOpen ? 1 : 0,
+        transform: isMenuOpen ? 'translateY(0)' : 'translateY(14px)',
+        transition: `opacity 360ms ease ${60 + linkIdx * 45}ms,
+                     transform 360ms cubic-bezier(0.4,0,0.2,1) ${60 + linkIdx * 45}ms`,
+      }}
+    >
+      {/* Top-level button */}
+      <button
+        onClick={() => hasSubs && onToggle(link)}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '15px 0',
+          background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+        }}
+      >
+        <span style={{
+          fontSize: 12.5, fontWeight: 700,
+          letterSpacing: '0.13em', color: '#111',
+        }}>
+          {link}
+        </span>
+        {hasSubs && (
+          <ChevronDown
+            size={17}
+            strokeWidth={1.8}
+            style={{
+              color: '#9ca3af', flexShrink: 0,
+              transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: 'transform 360ms cubic-bezier(0.4,0,0.2,1)',
+            }}
+          />
+        )}
+      </button>
+
+      {/* Level-1 accordion (category list) */}
+      {hasSubs && (
+        <SlideAccordion isOpen={isExpanded}>
+          <CategoryList
+            cats={cats}
+            linkKey={link}
+          />
+        </SlideAccordion>
+      )}
+    </li>
+  );
+};
+
+/* ─────────────────────────────────────────────────────────────────────────
+   CategoryList — list of categories under a nav item
+──────────────────────────────────────────────────────────────────────────*/
+const CategoryList = ({ cats, linkKey }) => {
+  const [expandedCat, setExpandedCat] = useState(null);
+
+  const toggleCat = useCallback((key) => {
+    setExpandedCat(prev => prev === key ? null : key);
+  }, []);
+
+  return (
+    <ul style={{ listStyle: 'none', margin: 0, padding: '0 0 12px 0' }}>
+      {cats.map((cat, idx) => {
+        const isObj = typeof cat === 'object';
+        const catName = isObj ? cat.name : cat;
+        const subCats = isObj && cat.subCategories ? cat.subCategories : [];
+        const catKey = `${linkKey}-${catName}`;
+        const isCatOpen = expandedCat === catKey;
+
+        return (
+          <li key={idx} style={{ borderLeft: '2px solid #f0f0f0', marginLeft: 4 }}>
+            {subCats.length > 0 ? (
+              <>
+                {/* Category button */}
+                <button
+                  onClick={() => toggleCat(catKey)}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '10px 4px 10px 16px',
+                    background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+                  }}
+                >
+                  <span style={{
+                    fontSize: 12, fontWeight: 600,
+                    letterSpacing: '0.07em', color: '#374151',
+                  }}>
+                    {catName}
+                  </span>
+                  <ChevronDown
+                    size={13}
+                    strokeWidth={2}
+                    style={{
+                      color: isCatOpen ? '#111' : '#bbb', flexShrink: 0,
+                      transform: isCatOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 320ms cubic-bezier(0.4,0,0.2,1), color 200ms',
+                    }}
+                  />
+                </button>
+
+                {/* Level-2 accordion (sub-categories) */}
+                <SlideAccordion isOpen={isCatOpen} style={{ marginLeft: 16 }}>
+                  <SubCatList subCats={subCats} />
+                </SlideAccordion>
+              </>
+            ) : (
+              /* Plain category (no sub-items) */
+              <div style={{ padding: '10px 0 10px 16px', cursor: 'pointer' }}>
+                <span style={{
+                  fontSize: 12, fontWeight: 500,
+                  letterSpacing: '0.07em', color: '#374151',
+                }}>
+                  {catName}
+                </span>
+              </div>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+};
+
+/* ─────────────────────────────────────────────────────────────────────────
+   SubCatList — the innermost list (e.g. FOOTBALLS, HANDBALLS inside BALLS)
+──────────────────────────────────────────────────────────────────────────*/
+const SubCatList = ({ subCats }) => (
+  <ul style={{ listStyle: 'none', margin: 0, padding: '2px 0 8px 0' }}>
+    {subCats.map((sub, si) => (
+      <li
+        key={si}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '7px 0 7px 16px',
+          borderLeft: '1px solid #f3f4f6',
+          cursor: 'pointer',
+        }}
+      >
+        {sub.image && (
+          <div style={{
+            width: 30, height: 30, flexShrink: 0,
+            borderRadius: 6, overflow: 'hidden', background: '#f9fafb',
+          }}>
+            <img
+              src={sub.image} alt={sub.name} loading="lazy"
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          </div>
+        )}
+        <span style={{
+          fontSize: 11.5, fontWeight: 500,
+          letterSpacing: '0.06em', color: '#6b7280',
+        }}>
+          {sub.name}
+        </span>
+      </li>
+    ))}
+  </ul>
+);
+
+/* ─────────────────────────────────────────────────────────────────────────
+   MobileMenu
+──────────────────────────────────────────────────────────────────────────*/
+const MobileMenu = ({ isOpen, onClose, navLinks, drawerData }) => {
+  const [expandedLink, setExpandedLink] = useState(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { if (isOpen) setMounted(true); }, [isOpen]);
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
-  /* Reset when closed */
-  useEffect(() => {
-    if (!isOpen) {
-      const t = setTimeout(() => {
-        setExpandedLink(null);
-        setExpandedCategory(null);
-      }, 400); // wait for slide-out to finish before resetting
-      return () => clearTimeout(t);
-    }
-  }, [isOpen]);
+  const toggleLink = useCallback((link) => {
+    setExpandedLink(prev => prev === link ? null : link);
+  }, []);
 
-  const toggleLink = (link) => {
-    setExpandedLink(prev => (prev === link ? null : link));
-    setExpandedCategory(null);
-  };
-
-  const toggleCategory = (key) =>
-    setExpandedCategory(prev => (prev === key ? null : key));
-
-  const hasDrawer = (link) => !!drawerData[link];
-
-  if (!mounted) return null; // don't render until first open
+  if (!mounted) return null;
 
   return (
     <>
-      {/* ── Backdrop ─────────────────────────────────────────────────── */}
+      {/* ── Backdrop ─────────────────────────────────────────── */}
       <div
         onClick={onClose}
         style={{
           position: 'fixed', inset: 0, zIndex: 70,
-          background: 'rgba(0,0,0,0.55)',
-          backdropFilter: 'blur(4px)',
-          transition: 'opacity 350ms ease',
+          background: 'rgba(0,0,0,0.52)',
+          backdropFilter: 'blur(5px)',
+          WebkitBackdropFilter: 'blur(5px)',
           opacity: isOpen ? 1 : 0,
           pointerEvents: isOpen ? 'auto' : 'none',
+          transition: 'opacity 350ms ease',
         }}
       />
 
-      {/* ── Bottom Sheet ─────────────────────────────────────────────── */}
+      {/* ── Bottom sheet ─────────────────────────────────────── */}
       <div
         style={{
-          position: 'fixed',
-          bottom: 0, left: 0, right: 0,
+          position: 'fixed', bottom: 0, left: 0, right: 0,
           zIndex: 75,
           height: '92dvh',
-          background: '#fff',
-          borderTopLeftRadius: 22,
-          borderTopRightRadius: 22,
-          boxShadow: '0 -12px 60px rgba(0,0,0,0.22)',
-          display: 'flex',
-          flexDirection: 'column',
-          /* ← THE REAL smooth spring curve applied via inline style */
-          transform: isOpen ? 'translateY(0)' : 'translateY(100%)',
-          transition: 'transform 480ms cubic-bezier(0.32, 0.72, 0, 1)',
+          background: '#ffffff',
+          borderTopLeftRadius: 22, borderTopRightRadius: 22,
+          boxShadow: '0 -14px 60px rgba(0,0,0,0.2)',
+          display: 'flex', flexDirection: 'column',
+          /* iOS-feel spring spring curve */
+          transform: isOpen ? 'translateY(0%)' : 'translateY(100%)',
+          transition: 'transform 490ms cubic-bezier(0.32, 0.72, 0, 1)',
           willChange: 'transform',
+          overscrollBehavior: 'contain',
         }}
       >
-        {/* Handle bar */}
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 6px' }}>
-          <div style={{ width: 40, height: 4, borderRadius: 99, background: '#d1d5db' }} />
+        {/* Drag handle */}
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
+          <div style={{ width: 38, height: 4, borderRadius: 99, background: '#e5e7eb' }} />
         </div>
 
-        {/* Header row */}
-        <div
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '10px 20px 10px',
-            borderBottom: '1px solid #f3f4f6',
-          }}
-        >
-          {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-            <div style={{ position: 'relative', width: 28, height: 28 }}>
+        {/* Header */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '10px 20px 12px',
+          borderBottom: '1px solid #f3f4f6',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer' }}>
+            <div style={{ position: 'relative', width: 26, height: 26 }}>
               <div style={{
                 position: 'absolute', top: 0,
                 width: 0, height: 0,
-                borderLeft: '14px solid transparent',
-                borderRight: '14px solid transparent',
-                borderBottom: '24px solid black',
+                borderLeft: '13px solid transparent',
+                borderRight: '13px solid transparent',
+                borderBottom: '22px solid #111',
               }} />
             </div>
-            <span style={{ fontSize: 18, fontWeight: 900, letterSpacing: '-0.04em', marginTop: 2 }}>
+            <span style={{ fontSize: 17, fontWeight: 900, letterSpacing: '-0.04em', marginTop: 2 }}>
               SELECT
             </span>
           </div>
 
-          {/* Close button */}
           <button
             onClick={onClose}
             style={{
-              padding: 8, borderRadius: '50%',
+              width: 36, height: 36, borderRadius: '50%',
               background: '#f3f4f6', border: 'none', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'background 200ms',
+              transition: 'background 180ms',
+              flexShrink: 0,
             }}
-            onMouseEnter={e => e.currentTarget.style.background = '#e5e7eb'}
-            onMouseLeave={e => e.currentTarget.style.background = '#f3f4f6'}
           >
-            <X size={19} strokeWidth={1.6} />
+            <X size={18} strokeWidth={1.6} />
           </button>
         </div>
 
-        {/* ── Scrollable nav list ───────────────────────────────────── */}
-        <div style={{ overflowY: 'auto', flex: 1, padding: '8px 20px 24px', WebkitOverflowScrolling: 'touch' }}>
+        {/* Scrollable list */}
+        <div
+          style={{
+            overflowY: 'auto', flex: 1,
+            padding: '4px 20px 28px',
+            WebkitOverflowScrolling: 'touch',
+          }}
+        >
           <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-            {navLinks.map((link, linkIdx) => {
-              const data = drawerData[link];
-              const isExpanded = expandedLink === link;
-              const cats = data?.categories || [];
-              const hasSubs = hasDrawer(link);
-
-              return (
-                <li
-                  key={link}
-                  style={{
-                    borderBottom: '1px solid #f3f4f6',
-                    /* Stagger items on open */
-                    opacity: isOpen ? 1 : 0,
-                    transform: isOpen ? 'translateY(0)' : 'translateY(12px)',
-                    transition: `opacity 350ms ease ${linkIdx * 40}ms, transform 350ms ease ${linkIdx * 40}ms`,
-                  }}
-                >
-                  {/* Top-level row */}
-                  <button
-                    onClick={() => hasSubs && toggleLink(link)}
-                    style={{
-                      width: '100%', display: 'flex', alignItems: 'center',
-                      justifyContent: 'space-between', padding: '16px 0',
-                      background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
-                    }}
-                  >
-                    <span style={{
-                      fontSize: 13, fontWeight: 700,
-                      letterSpacing: '0.12em', color: '#000',
-                    }}>
-                      {link}
-                    </span>
-                    {hasSubs && (
-                      <ChevronDown
-                        size={17}
-                        strokeWidth={1.8}
-                        style={{
-                          color: '#9ca3af',
-                          transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                          transition: 'transform 350ms cubic-bezier(0.4,0,0.2,1)',
-                        }}
-                      />
-                    )}
-                  </button>
-
-                  {/* Category accordion */}
-                  {hasSubs && (
-                    <Accordion isOpen={isExpanded}>
-                      <ul style={{ listStyle: 'none', margin: 0, padding: '0 0 12px 0' }}>
-                        {cats.map((cat, idx) => {
-                          const isObj = typeof cat === 'object';
-                          const catName = isObj ? cat.name : cat;
-                          const subCats = isObj && cat.subCategories ? cat.subCategories : [];
-                          const catKey = `${link}-${catName}`;
-                          const isCatExpanded = expandedCategory === catKey;
-
-                          return (
-                            <li
-                              key={idx}
-                              style={{ borderLeft: '2px solid #f3f4f6', marginLeft: 4 }}
-                            >
-                              {subCats.length > 0 ? (
-                                <>
-                                  {/* Category row */}
-                                  <button
-                                    onClick={() => toggleCategory(catKey)}
-                                    style={{
-                                      width: '100%', display: 'flex', alignItems: 'center',
-                                      justifyContent: 'space-between',
-                                      padding: '11px 4px 11px 16px',
-                                      background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
-                                    }}
-                                  >
-                                    <span style={{ fontSize: 12.5, fontWeight: 600, letterSpacing: '0.08em', color: '#374151' }}>
-                                      {catName}
-                                    </span>
-                                    <ChevronDown
-                                      size={14}
-                                      strokeWidth={1.8}
-                                      style={{
-                                        color: '#9ca3af',
-                                        transform: isCatExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                                        transition: 'transform 320ms cubic-bezier(0.4,0,0.2,1)',
-                                      }}
-                                    />
-                                  </button>
-
-                                  {/* Sub-categories accordion */}
-                                  <Accordion isOpen={isCatExpanded}>
-                                    <ul style={{
-                                      listStyle: 'none', margin: '0 0 8px 16px', padding: 0,
-                                    }}>
-                                      {subCats.map((sub, si) => (
-                                        <li
-                                          key={si}
-                                          style={{
-                                            display: 'flex', alignItems: 'center', gap: 12,
-                                            padding: '8px 0 8px 16px',
-                                            borderLeft: '1px solid #f3f4f6',
-                                            cursor: 'pointer',
-                                          }}
-                                        >
-                                          {sub.image && (
-                                            <div style={{
-                                              width: 32, height: 32, flexShrink: 0,
-                                              borderRadius: 6, overflow: 'hidden', background: '#f9fafb',
-                                            }}>
-                                              <img
-                                                src={sub.image}
-                                                alt={sub.name}
-                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                                loading="lazy"
-                                              />
-                                            </div>
-                                          )}
-                                          <span style={{
-                                            fontSize: 11.5, fontWeight: 500,
-                                            letterSpacing: '0.07em', color: '#6b7280',
-                                          }}>
-                                            {sub.name}
-                                          </span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </Accordion>
-                                </>
-                              ) : (
-                                /* Simple category */
-                                <div style={{
-                                  padding: '11px 0 11px 16px', cursor: 'pointer',
-                                  borderRadius: '0 8px 8px 0',
-                                }}>
-                                  <span style={{ fontSize: 12.5, fontWeight: 500, letterSpacing: '0.08em', color: '#374151' }}>
-                                    {catName}
-                                  </span>
-                                </div>
-                              )}
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </Accordion>
-                  )}
-                </li>
-              );
-            })}
+            {navLinks.map((link, idx) => (
+              <NavItem
+                key={link}
+                link={link}
+                data={drawerData[link]}
+                isExpanded={expandedLink === link}
+                onToggle={toggleLink}
+                linkIdx={idx}
+                isMenuOpen={isOpen}
+              />
+            ))}
           </ul>
 
-          {/* Bottom — language */}
-          <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #f3f4f6' }}>
+          {/* Language picker */}
+          <div style={{ marginTop: 22, paddingTop: 18, borderTop: '1px solid #f3f4f6' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
               <div style={{
                 width: 20, height: 20, borderRadius: '50%', background: '#2563eb',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
               }}>
                 <Globe size={11} color="#fff" />
               </div>
-              <span style={{ fontSize: 12, fontWeight: 500, letterSpacing: '0.08em', color: '#374151', display: 'flex', alignItems: 'center', gap: 4 }}>
-                International <ChevronDown size={12} />
+              <span style={{
+                fontSize: 11.5, fontWeight: 500,
+                letterSpacing: '0.07em', color: '#4b5563',
+                display: 'flex', alignItems: 'center', gap: 3,
+              }}>
+                International <ChevronDown size={11} />
               </span>
             </div>
           </div>
