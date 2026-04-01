@@ -88,6 +88,7 @@ const slides = [
 export default function HistorySlider() {
   const [current, setCurrent] = useState(2); // start at 1962
   const [animating, setAnimating] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [direction, setDirection] = useState("right");
   const timelineRef = useRef(null);
 
@@ -95,10 +96,11 @@ export default function HistorySlider() {
     if (animating || index === current) return;
     setDirection(dir !== undefined ? dir : index > current ? "right" : "left");
     setAnimating(true);
+    setIsExpanded(false);
     setTimeout(() => {
       setCurrent(index);
       setAnimating(false);
-    }, 400);
+    }, 250);
   };
 
   const prev = () => goTo(current > 0 ? current - 1 : slides.length - 1, "left");
@@ -121,7 +123,7 @@ export default function HistorySlider() {
       {/* Background year watermark */}
       <div className="absolute inset-0 flex items-end justify-center pointer-events-none select-none overflow-hidden z-0">
         <span
-          className={`font-black tracking-tighter leading-none transition-all duration-500 text-8xl md:text-9xl lg:text-[22rem] opacity-${animating ? '0' : '100'}`}
+          className={`font-black tracking-tighter leading-none transition-all duration-300 text-8xl md:text-9xl lg:text-[22rem] opacity-${animating ? '0' : '100'}`}
           style={{ color: "rgba(0,0,0,0.055)", lineHeight: 1, paddingBottom: "8vh" }}
         >
           {slide.year}
@@ -131,7 +133,7 @@ export default function HistorySlider() {
       {/* Main content */}
       <div className="relative z-10 w-full grid grid-cols-1 lg:grid-cols-2 items-center px-6 md:px-16 lg:px-20 py-16 lg:py-24 gap-8 lg:gap-16">
         {/* Left: Image */}
-        <div className={`flex items-center justify-center transition-all duration-400 ${animating ? 'opacity-0' : 'opacity-100'} ${animating ? (direction === 'right' ? '-translate-x-10' : 'translate-x-10') : 'translate-x-0'}`}>
+        <div className={`flex items-center justify-center transition-all duration-300 ${animating ? 'opacity-0' : 'opacity-100'} ${animating ? (direction === 'right' ? '-translate-x-10' : 'translate-x-10') : 'translate-x-0'}`}>
           <img
             src={slide.image}
             alt={slide.title}
@@ -140,8 +142,8 @@ export default function HistorySlider() {
         </div>
 
         {/* Right: Text - Positioned higher */}
-        <div className={`transition-all duration-400 flex items-start justify-center ${animating ? 'opacity-0' : 'opacity-100'} ${animating ? (direction === 'right' ? 'translate-x-10' : '-translate-x-10') : 'translate-x-0'}`}>
-          <div className="mt-[-2rem]">
+        <div className={`transition-all duration-300 flex items-start justify-center ${animating ? 'opacity-0' : 'opacity-100'} ${animating ? (direction === 'right' ? 'translate-x-10' : '-translate-x-10') : 'translate-x-0'}`}>
+          <div className="mt-[-2rem] max-w-[600px]">
             <p
               className="uppercase tracking-widest font-normal mb-3 text-xs md:text-sm"
               style={{ color: slide.accent, letterSpacing: "0.2em", fontFamily: "'Arial', sans-serif" }}
@@ -151,9 +153,21 @@ export default function HistorySlider() {
             <h1 className="font-normal uppercase leading-tight mb-6 text-2xl md:text-3xl lg:text-5xl text-gray-900" style={{ lineHeight: 1.1, fontFamily: "'Arial', sans-serif" }}>
               {slide.title}
             </h1>
-            <p className="text-sm md:text-base text-gray-600 leading-relaxed">
-              {slide.description}
-            </p>
+            
+            <div className="relative">
+              <p className={`text-sm md:text-base text-gray-600 leading-relaxed ${!isExpanded ? 'line-clamp-3' : ''}`}>
+                {slide.description}
+              </p>
+              {slide.description.length > 150 && (
+                <button 
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="mt-3 text-xs font-bold uppercase tracking-widest border-b-2 border-current transition-all hover:opacity-70"
+                  style={{ color: slide.accent }}
+                >
+                  {isExpanded ? 'Show Less' : 'Read More'}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
