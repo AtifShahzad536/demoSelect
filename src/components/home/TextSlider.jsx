@@ -46,10 +46,10 @@ export default function TextSlider() {
           >
             {slides.map((slide, index) => (
               <div key={index} className="w-full flex-shrink-0 flex flex-col items-center justify-center px-4">
-                <p className="relative text-gray-800 font-black text-3xl md:text-4xl font-bold mb-4 px-24 text-center">
-                  <span className="text-gray-300 text-7xl md:text-8xl font-serif absolute -top-8 left-12 opacity-75">"</span>
-                  <span className="text-2xl md:text-3xl">{slide.quote}</span>
-                  <span className="text-gray-300 text-7xl md:text-8xl font-serif absolute -bottom-8 right-12 opacity-75">"</span>
+                <p className="relative text-gray-800 font-black text-2xl md:text-4xl font-bold mb-4 px-6 md:px-24 text-center whitespace-normal">
+                  <span className="text-gray-300 text-5xl md:text-8xl font-serif absolute -top-6 md:-top-8 left-2 md:left-12 opacity-75">"</span>
+                  <span className="text-lg md:text-3xl">{slide.quote}</span>
+                  <span className="text-gray-300 text-5xl md:text-8xl font-serif absolute -bottom-6 md:-bottom-8 right-2 md:right-12 opacity-75">"</span>
                 </p>
                 <p className="text-base md:text-lg text-gray-600 uppercase tracking-wider font-medium">{slide.author}</p>
               </div>
