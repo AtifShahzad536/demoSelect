@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { X, ChevronDown, Globe } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 /* ─────────────────────────────────────────────────────────────────────────
    SlideAccordion
@@ -57,7 +58,7 @@ const SlideAccordion = ({ isOpen, children, style = {} }) => {
 /* ─────────────────────────────────────────────────────────────────────────
    NavItem — one top-level nav link + its category list
 ──────────────────────────────────────────────────────────────────────────*/
-const NavItem = ({ link, data, isExpanded, onToggle, linkIdx, isMenuOpen }) => {
+const NavItem = ({ link, data, isExpanded, onToggle, linkIdx, isMenuOpen, onNavigate }) => {
   const cats = data?.categories || [];
   const hasSubs = !!data;
 
@@ -73,7 +74,7 @@ const NavItem = ({ link, data, isExpanded, onToggle, linkIdx, isMenuOpen }) => {
     >
       {/* Top-level button */}
       <button
-        onClick={() => hasSubs && onToggle(link)}
+        onClick={() => hasSubs ? onToggle(link) : onNavigate()}
         style={{
           width: '100%', display: 'flex', alignItems: 'center',
           justifyContent: 'space-between',
@@ -106,6 +107,7 @@ const NavItem = ({ link, data, isExpanded, onToggle, linkIdx, isMenuOpen }) => {
           <CategoryList
             cats={cats}
             linkKey={link}
+            onNavigate={onNavigate}
           />
         </SlideAccordion>
       )}
@@ -116,7 +118,7 @@ const NavItem = ({ link, data, isExpanded, onToggle, linkIdx, isMenuOpen }) => {
 /* ─────────────────────────────────────────────────────────────────────────
    CategoryList — list of categories under a nav item
 ──────────────────────────────────────────────────────────────────────────*/
-const CategoryList = ({ cats, linkKey }) => {
+const CategoryList = ({ cats, linkKey, onNavigate }) => {
   const [expandedCat, setExpandedCat] = useState(null);
 
   const toggleCat = useCallback((key) => {
@@ -165,12 +167,15 @@ const CategoryList = ({ cats, linkKey }) => {
 
                 {/* Level-2 accordion (sub-categories) */}
                 <SlideAccordion isOpen={isCatOpen} style={{ marginLeft: 16 }}>
-                  <SubCatList subCats={subCats} />
+                  <SubCatList subCats={subCats} onNavigate={onNavigate} />
                 </SlideAccordion>
               </>
             ) : (
-              /* Plain category (no sub-items) */
-              <div style={{ padding: '10px 0 10px 16px', cursor: 'pointer' }}>
+              /* Plain category (no sub-items) — clicking navigates */
+              <div
+                onClick={() => onNavigate()}
+                style={{ padding: '10px 0 10px 16px', cursor: 'pointer' }}
+              >
                 <span style={{
                   fontSize: 12, fontWeight: 500,
                   letterSpacing: '0.07em', color: '#374151',
@@ -189,11 +194,12 @@ const CategoryList = ({ cats, linkKey }) => {
 /* ─────────────────────────────────────────────────────────────────────────
    SubCatList — the innermost list (e.g. FOOTBALLS, HANDBALLS inside BALLS)
 ──────────────────────────────────────────────────────────────────────────*/
-const SubCatList = ({ subCats }) => (
+const SubCatList = ({ subCats, onNavigate }) => (
   <ul style={{ listStyle: 'none', margin: 0, padding: '2px 0 8px 0' }}>
     {subCats.map((sub, si) => (
       <li
         key={si}
+        onClick={() => onNavigate()}
         style={{
           display: 'flex', alignItems: 'center', gap: 10,
           padding: '7px 0 7px 16px',
@@ -229,6 +235,7 @@ const SubCatList = ({ subCats }) => (
 const MobileMenu = ({ isOpen, onClose, navLinks, drawerData }) => {
   const [expandedLink, setExpandedLink] = useState(null);
   const [mounted, setMounted] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => { if (isOpen) setMounted(true); }, [isOpen]);
   useEffect(() => {
@@ -239,6 +246,11 @@ const MobileMenu = ({ isOpen, onClose, navLinks, drawerData }) => {
   const toggleLink = useCallback((link) => {
     setExpandedLink(prev => prev === link ? null : link);
   }, []);
+
+  const handleNavigate = useCallback(() => {
+    onClose();
+    navigate('/products/all-balls');
+  }, [navigate, onClose]);
 
   if (!mounted) return null;
 
@@ -331,6 +343,7 @@ const MobileMenu = ({ isOpen, onClose, navLinks, drawerData }) => {
                 onToggle={toggleLink}
                 linkIdx={idx}
                 isMenuOpen={isOpen}
+                onNavigate={handleNavigate}
               />
             ))}
           </ul>

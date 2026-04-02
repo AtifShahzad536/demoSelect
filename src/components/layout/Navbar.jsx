@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Globe, ChevronDown, Menu } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import NavigationDrawer from './NavigationDrawer';
 import PartnerMegaMenu from './PartnerMegaMenu';
 import MobileMenu from './MobileMenu';
@@ -9,6 +10,7 @@ const Navbar = () => {
   const [activeDrawer, setActiveDrawer] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const navigate = useNavigate();
 
   const drawerData = {
     PRODUCTS: {
@@ -174,23 +176,22 @@ const Navbar = () => {
   return (
     <>
       <nav className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-sm border-b border-gray-100">
-        <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-16 md:h-20 flex items-center justify-between">
-
-          <div className="flex items-center gap-3 group cursor-pointer">
-            <div className="relative w-9 h-9 md:w-11 md:h-11 flex items-center justify-center overflow-hidden">
+        <div className="w-full px-[2%] md:px-[3%] h-16 md:h-20 flex items-center justify-between">
+          <div
+            className="flex items-center gap-3 group cursor-pointer"
+            onClick={() => { setActiveDrawer(null); navigate('/'); }}
+          >
+            <div className="relative w-10 h-10 md:w-11 md:h-11 flex items-center justify-center overflow-hidden">
               <img
                 src="/logo_silverstar1.png"
                 alt="Silver Star Group"
                 className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110"
               />
             </div>
-            {/* <span className="text-base md:text-lg font-bold tracking-tight text-gray-900 mt-0.5 whitespace-nowrap">
-              Silver Star
-            </span> */}
           </div>
 
           {/* Desktop Navigation Links — hidden below lg */}
-          <div className="hidden lg:flex items-center gap-10">
+          <div className="hidden lg:flex items-center gap-[1.5vw]">
             {navLinks.map((link) => (
               <div
                 key={link}
@@ -203,18 +204,20 @@ const Navbar = () => {
                       setActiveDrawer(link);
                     }
                   } else {
-                    // Navigate directly or handle as a standalone link
-                    console.log(`Navigating to ${link}`);
                     setActiveDrawer(null);
                   }
                 }}
               >
-                <span className={`nav-link text-[10px] md:text-[11px] font-medium tracking-[0.15em] ${activeDrawer === link ? 'font-bold' : ''}`}>
+                <span className={`text-[10px] md:text-[10px] font-bold tracking-[0.1em] transition-all duration-300 ${activeDrawer === link ? 'text-black' : 'text-gray-500 hover:text-black uppercase'}`}>
                   {link}
                 </span>
+                
+                {/* Underline Animation */}
+                <div className={`absolute -bottom-1 left-0 h-[1.5px] bg-black transition-all duration-300 ease-out ${activeDrawer === link ? 'w-full' : 'w-0 group-hover:w-full'}`}></div>
+
                 {(drawerData[link] || link === 'PARTNER WITH US') && (
                   <ChevronDown
-                    size={14}
+                    size={12}
                     className={`transition-transform duration-300 ${activeDrawer === link ? 'rotate-180' : 'group-hover:rotate-180'}`}
                   />
                 )}
@@ -223,13 +226,13 @@ const Navbar = () => {
           </div>
 
           {/* Right Section */}
-          <div className="flex items-center gap-3 md:gap-4 lg:gap-6">
+          <div className="flex items-center gap-6 lg:gap-[2.5vw]">
             {/* Language — desktop only */}
             <div className="hidden lg:flex items-center gap-2 cursor-pointer hover:opacity-70 transition-opacity">
               <div className="w-5 h-5 rounded-full overflow-hidden flex items-center justify-center bg-blue-600">
                 <Globe size={14} className="text-white" />
               </div>
-              <span className="text-xs font-normal flex items-center gap-1">
+              <span className="text-[10px] font-black tracking-widest uppercase">
                 International
               </span>
             </div>
@@ -241,7 +244,7 @@ const Navbar = () => {
               onClick={() => setSearchOpen(true)}
               aria-label="Open search"
             >
-              <Search size={20} strokeWidth={1.5} className="md:w-[22px] md:h-[22px]" />
+              <Search size={22} strokeWidth={1.5} />
             </button>
 
             {/* Hamburger — visible on mobile & tablet (< lg) */}
@@ -251,7 +254,7 @@ const Navbar = () => {
               onClick={() => setMobileMenuOpen(true)}
               aria-label="Open menu"
             >
-              <Menu size={22} strokeWidth={1.8} className="text-black" />
+              <Menu size={24} strokeWidth={1.8} className="text-black" />
             </button>
           </div>
         </div>

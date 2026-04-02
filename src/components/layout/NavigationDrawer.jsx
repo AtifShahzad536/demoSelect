@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { X, ChevronRight, ChevronLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const NavigationDrawer = ({ isOpen, onClose, data }) => {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isHoveringBackdrop, setIsHoveringBackdrop] = useState(false);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [activeCategoryIndex, setActiveCategoryIndex] = useState(null);
+  const navigate = useNavigate();
 
   const { 
     categories = [], 
@@ -14,7 +16,6 @@ const NavigationDrawer = ({ isOpen, onClose, data }) => {
   } = data || {};
 
   useEffect(() => {
-    // Reset state when drawer data/type changes
     setCurrentSlideIndex(0);
     setActiveCategoryIndex(null);
   }, [data, isOpen]);
@@ -64,7 +65,12 @@ const NavigationDrawer = ({ isOpen, onClose, data }) => {
     }
   };
 
-  // Resolve current active category payload
+  // Navigate to subcategories page when a sub-item is clicked
+  const handleSubCategoryClick = (sub) => {
+    onClose();
+    navigate('/products/all-balls');
+  };
+
   const activeCat = activeCategoryIndex !== null ? categories[activeCategoryIndex] : null;
   const hasSubMenu = activeCat && typeof activeCat === 'object' && activeCat.subCategories && activeCat.subCategories.length > 0;
 
@@ -116,6 +122,13 @@ const NavigationDrawer = ({ isOpen, onClose, data }) => {
                     key={idx} 
                     className="flex items-center justify-between group cursor-pointer"
                     onMouseEnter={() => setActiveCategoryIndex(idx)}
+                    onClick={() => {
+                      // If no sub-menu, clicking the main category also navigates
+                      if (!hasItemSubMenu) {
+                        onClose();
+                        navigate('/products/all-balls');
+                      }
+                    }}
                   >
                     <span className={`relative text-lg font-normal tracking-wider transition-all duration-300 ${!hasItemSubMenu ? 'inline-block py-1 group-hover:text-black' : 'group-hover:translate-x-2'}`}>
                       {name}
@@ -189,13 +202,17 @@ const NavigationDrawer = ({ isOpen, onClose, data }) => {
           )}
         </div>
 
-        {/* RIGHT COLUMN - Subcategories */}
+        {/* RIGHT COLUMN - Subcategories (click navigates to products page) */}
         <div className={`flex flex-col h-full bg-white border-l-2 border-gray-100 flex-1 overflow-hidden transition-all duration-300 ${hasSubMenu ? 'opacity-100' : 'opacity-0'}`}>
           <div className="flex-1 overflow-y-auto pt-[120px] px-12 custom-scrollbar pb-12">
             {hasSubMenu && (
               <ul className="flex flex-col gap-6 animate-fade-in">
                 {activeCat.subCategories.map((sub, i) => (
-                  <li key={i} className="flex items-center gap-6 cursor-pointer group">
+                  <li
+                    key={i}
+                    className="flex items-center gap-6 cursor-pointer group"
+                    onClick={() => handleSubCategoryClick(sub)}
+                  >
                     <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center">
                       <img 
                         src={sub.image} 

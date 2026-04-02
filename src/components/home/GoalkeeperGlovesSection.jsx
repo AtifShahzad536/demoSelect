@@ -1,6 +1,6 @@
 export default function GoalkeeperGlovesSection() {
   return (
-    <section className="w-full flex flex-col md:flex-row min-h-[600px] mx-auto px-6 my-12 gap-4">
+    <section className="w-full flex flex-col md:flex-row min-h-[600px] mx-auto px-[2%] md:px-[3%] my-12 gap-4">
       {/* Left - Text Card */}
       <div
         className="flex-1 flex flex-col items-start justify-center text-left px-10 py-16 rounded-lg"

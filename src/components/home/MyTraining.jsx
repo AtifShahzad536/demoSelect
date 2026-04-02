@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 
 const MyTraining = () => {
   return (
-    <section className="w-full px-4 md:px-6 py-6">
+    <section className="w-full px-[2%] md:px-[3%] py-6">
       <div className="flex flex-col md:flex-row gap-4 md:gap-5">
         {/* Left — Image */}
         <div className="w-full md:w-1/2 relative overflow-hidden min-h-[400px] rounded-2xl">

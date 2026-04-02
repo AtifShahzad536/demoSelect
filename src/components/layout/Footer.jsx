@@ -32,7 +32,7 @@ const Footer = () => {
   return (
     <footer className="w-full bg-black text-white">
       {/* Top Section */}
-      <div className="max-w-[1440px] mx-auto px-6 pt-20 pb-12">
+      <div className="w-full px-[2%] md:px-[3%] pt-20 pb-12">
         <div className="grid grid-cols-1 md:grid-cols-6 gap-12">
 
           {/* Brand Column */}
@@ -112,9 +112,9 @@ const Footer = () => {
 
       {/* Bottom Bar */}
       <div className="border-t border-gray-800">
-        <div className="max-w-[1440px] mx-auto px-6 py-5 flex flex-col md:flex-row items-center justify-between gap-3">
+        <div className="w-full px-[2%] md:px-[3%] py-5 flex flex-col md:flex-row items-center justify-between gap-3">
           <p className="text-xs text-gray-600 tracking-wide">
-            © {new Date().getFullYear()} Select Sport A/S. All rights reserved.
+            © {new Date().getFullYear()} Silver Star Group. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
             {['Privacy Policy', 'Cookie Policy', 'Terms of Service'].map((item) => (

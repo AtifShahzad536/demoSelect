@@ -131,7 +131,7 @@ export default function HistorySlider() {
       </div>
 
       {/* Main content */}
-      <div className="relative z-10 w-full grid grid-cols-1 lg:grid-cols-2 items-center px-6 md:px-16 lg:px-20 py-16 lg:py-24 gap-8 lg:gap-16">
+      <div className="relative z-10 w-full grid grid-cols-1 lg:grid-cols-2 items-center px-[2%] md:px-[3%] py-16 lg:py-24 gap-8 lg:gap-16">
         {/* Left: Image */}
         <div className={`flex items-center justify-center transition-all duration-300 ${animating ? 'opacity-0' : 'opacity-100'} ${animating ? (direction === 'right' ? '-translate-x-10' : 'translate-x-10') : 'translate-x-0'}`}>
           <img
@@ -174,9 +174,9 @@ export default function HistorySlider() {
 
       {/* Timeline bar */}
       <div className="relative z-20 w-full pb-8 md:pb-10">
-        <div className="relative px-6 md:px-16 lg:px-20">
+        <div className="relative px-[2%] md:px-[3%]">
           {/* Line */}
-          <div className="absolute top-5 left-6 md:left-16 lg:left-20 right-6 md:right-16 lg:right-20 h-px bg-gray-300"></div>
+          <div className="absolute top-5 left-[2%] md:left-[3%] right-[2%] md:right-[3%] h-px bg-gray-300"></div>
 
           {/* Dots + labels */}
           <div
@@ -210,14 +210,14 @@ export default function HistorySlider() {
       {/* Prev / Next arrows */}
       <button
         onClick={prev}
-        className="absolute right-[45%] md:right-16 lg:right-20 bottom-2 md:bottom-20 lg:bottom-30 w-9 h-9 md:w-12 md:h-12 rounded-full border border-gray-300 bg-white flex items-center justify-center cursor-pointer z-30 shadow-lg transition-all duration-200 hover:bg-gray-900 hover:text-white mr-10 md:mr-14 lg:mr-16"
+        className="absolute right-[50%] md:right-[3%] bottom-2 md:bottom-20 lg:bottom-30 w-9 h-9 md:w-12 md:h-12 rounded-full border border-gray-300 bg-white flex items-center justify-center cursor-pointer z-30 shadow-lg transition-all duration-200 hover:bg-gray-900 hover:text-white mr-12 md:mr-16"
       >
         <FiChevronLeft size={18} />
       </button>
 
       <button
         onClick={next}
-        className="absolute right-[40%] md:right-16 lg:right-20 bottom-2 md:bottom-20 lg:bottom-30 w-9 h-9 md:w-12 md:h-12 rounded-full border border-gray-300 bg-white flex items-center justify-center cursor-pointer z-30 shadow-lg transition-all duration-200 hover:bg-gray-900 hover:text-white"
+        className="absolute right-[40%] md:right-[3%] bottom-2 md:bottom-20 lg:bottom-30 w-9 h-9 md:w-12 md:h-12 rounded-full border border-gray-300 bg-white flex items-center justify-center cursor-pointer z-30 shadow-lg transition-all duration-200 hover:bg-gray-900 hover:text-white"
       >
         <FiChevronRight size={18} />
       </button>

@@ -87,7 +87,7 @@ export default function BlogSection() {
   };
 
   return (
-    <section className="w-full bg-white py-[5%] px-[5%]">
+    <section className="w-full bg-white py-[5%] px-[2%] md:px-[3%]">
       <div className="w-full">
 
        

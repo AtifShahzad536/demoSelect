@@ -1,39 +1,16 @@
-import React, { useEffect } from 'react';
-import Navbar from './components/layout/Navbar';
-import Hero from './components/home/Hero';
-import Ticker from './components/home/Ticker';
-import Footer from './components/layout/Footer';
-import MyTraining from './components/home/MyTraining';
-import GoalkeeperGlovesSection from './components/home/GoalkeeperGlovesSection';
-import ClothingSection from './components/home/ClothingSection';
-import EverythingSection from './components/home/EverythingSection';
-import SustainabilitySection from './components/home/SustainabilitySection';
-import FootballHistorySlider from './components/home/FootballHistorySlider';
-import BlogSection from './components/home/BlogSection';
-import CookieConsent from './components/layout/CookieConsent';
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import HomePage from './pages/HomePage';
+import SubCategoriesPage from './pages/SubCategoriesPage';
+import ProductDetailPage from './pages/ProductDetailPage';
 
 export default function App() {
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    if ('scrollRestoration' in window.history) {
-      window.history.scrollRestoration = 'manual';
-    }
-  }, []);
-
   return (
-    <div className="min-h-screen">
-      <Navbar />
-      <Hero />
-      <Ticker />
-      <MyTraining />
-      <GoalkeeperGlovesSection />
-      <ClothingSection />
-      <EverythingSection />
-      <SustainabilitySection />
-      <FootballHistorySlider />
-      <BlogSection />
-      <Footer />
-      <CookieConsent />
-    </div>
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/products/all-balls" element={<SubCategoriesPage />} />
+      <Route path="/collections/:category" element={<SubCategoriesPage />} />
+      <Route path="/product/:id" element={<ProductDetailPage />} />
+    </Routes>
   );
 }
